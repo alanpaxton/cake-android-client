@@ -79,6 +79,15 @@ class JSONDataTask extends AsyncTask<URL, Void, JSONDataTask.Result> {
 
             // Also, Do you trust any utils thrown your way????
 
+            // Interesting philosophical point. Depends.
+            // You need a degree of trust, I would trust Android libs for instance.
+            // After that, there's reputation and due diligence, like looking for a solid test suite or other proofs.
+            // Popularity of a library speaks for something.
+            // It's good to be humble and accept that other people write code as good as you occasionally,
+            // and you can't do everything yourself.
+
+            //Now I'll go off and read that code...
+
             byte[] bytes = StreamUtils.readUnknownFully(in);
 
             // Read in charset of HTTP content.
