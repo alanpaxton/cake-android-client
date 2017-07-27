@@ -2,6 +2,7 @@ package com.waracle.androidtest;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.ImageView;
@@ -9,6 +10,7 @@ import android.widget.ImageView;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.InvalidParameterException;
 
@@ -27,7 +29,7 @@ public class ImageLoader {
      * @param url       image url
      * @param imageView view to set image too.
      */
-    public void load(String url, ImageView imageView) {
+    public void load(final String url, final ImageView imageView) {
         if (TextUtils.isEmpty(url)) {
             throw new InvalidParameterException("URL is empty!");
         }
@@ -35,35 +37,59 @@ public class ImageLoader {
         // Can you think of a way to improve loading of bitmaps
         // that have already been loaded previously??
 
+        LoadImageDataTask loadImageDataTask = new LoadImageDataTask() {
+
+            @Override public void onPostExecute(byte[] result) {
+                if (!isCancelled()) {
+                    setImageView(imageView, convertToBitmap(result));
+                } else {
+                    Log.e(TAG, "Failed to load image " + url);
+                }
+            }
+        };
         try {
-            setImageView(imageView, convertToBitmap(loadImageData(url)));
-        } catch (IOException e) {
-            Log.e(TAG, e.getMessage());
+            loadImageDataTask.execute(new URL[]{new URL(url)});
+        } catch (MalformedURLException mue) {
+            Log.e(TAG, "Bad (malformed) image URL, cannot load", mue);
         }
     }
 
-    private static byte[] loadImageData(String url) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-        InputStream inputStream = null;
-        try {
+    private static class LoadImageDataTask extends AsyncTask<URL, Void, byte[]> {
+
+        @Override
+        protected byte[] doInBackground(URL... urls) {
+            URL url = urls[0];
             try {
-                // Read data from workstation
-                inputStream = connection.getInputStream();
+                return loadImageData(url);
             } catch (IOException e) {
-                // Read the error from the workstation
-                inputStream = connection.getErrorStream();
+                Log.e(TAG, "Could not load image data for " + url, e);
+                return new byte[0];
             }
+        }
 
-            // Can you think of a way to make the entire
-            // HTTP more efficient using HTTP headers??
+        private static byte[] loadImageData(URL url) throws IOException {
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            InputStream inputStream = null;
+            try {
+                try {
+                    // Read data from workstation
+                    inputStream = connection.getInputStream();
+                } catch (IOException e) {
+                    // Read the error from the workstation
+                    inputStream = connection.getErrorStream();
+                }
 
-            return StreamUtils.readUnknownFully(inputStream);
-        } finally {
-            // Close the input stream if it exists.
-            StreamUtils.close(inputStream);
+                // Can you think of a way to make the entire
+                // HTTP more efficient using HTTP headers??
 
-            // Disconnect the connection
-            connection.disconnect();
+                return StreamUtils.readUnknownFully(inputStream);
+            } finally {
+                // Close the input stream if it exists.
+                StreamUtils.close(inputStream);
+
+                // Disconnect the connection
+                connection.disconnect();
+            }
         }
     }
 

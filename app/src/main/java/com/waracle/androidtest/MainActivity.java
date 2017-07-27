@@ -168,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
                         JSONObject object = (JSONObject) getItem(position);
                         title.setText(object.getString("title"));
                         desc.setText(object.getString("desc"));
-                        //mImageLoader.load(object.getString("image"), image);
+                        mImageLoader.load(object.getString("image"), image);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }

@@ -16,7 +16,7 @@ import java.net.URL;
  * Created by alan on 27/07/2017.
  */
 
-public class JSONDataTask extends AsyncTask<URL, Void, JSONDataTask.Result> {
+class JSONDataTask extends AsyncTask<URL, Void, JSONDataTask.Result> {
 
     /**
      * Encapsulate the result of the JSON request
