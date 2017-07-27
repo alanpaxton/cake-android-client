@@ -19,10 +19,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 
@@ -77,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
 
         private ListView mListView;
         private MyAdapter mAdapter;
+        private JSONDataTask loadTask;
 
         public PlaceholderFragment() { /**/ }
 
@@ -97,58 +95,29 @@ public class MainActivity extends AppCompatActivity {
             mListView.setAdapter(mAdapter);
 
             // Load data from net.
-            try {
-                JSONArray array = loadData();
-                mAdapter.setItems(array);
-            } catch (IOException | JSONException e) {
-                Log.e(TAG, e.getMessage());
-            }
-        }
-
-
-        private JSONArray loadData() throws IOException, JSONException {
-            URL url = new URL(JSON_URL);
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            try {
-                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-
-                // Can you think of a way to improve the performance of loading data
-                // using HTTP headers???
-
-                // Also, Do you trust any utils thrown your way????
-
-                byte[] bytes = StreamUtils.readUnknownFully(in);
-
-                // Read in charset of HTTP content.
-                String charset = parseCharset(urlConnection.getRequestProperty("Content-Type"));
-
-                // Convert byte array to appropriate encoded string.
-                String jsonText = new String(bytes, charset);
-
-                // Read string as JSON.
-                return new JSONArray(jsonText);
-            } finally {
-                urlConnection.disconnect();
-            }
-        }
-
-        /**
-         * Returns the charset specified in the Content-Type of this header,
-         * or the HTTP default (ISO-8859-1) if none can be found.
-         */
-        public static String parseCharset(String contentType) {
-            if (contentType != null) {
-                String[] params = contentType.split(",");
-                for (int i = 1; i < params.length; i++) {
-                    String[] pair = params[i].trim().split("=");
-                    if (pair.length == 2) {
-                        if (pair[0].equals("charset")) {
-                            return pair[1];
-                        }
+            loadTask = new JSONDataTask() {
+                @Override public void onPostExecute(Result result) {
+                    if (result.ok() && !isCancelled()) {
+                        mAdapter.setItems(result.json);
+                        mAdapter.notifyDataSetChanged();
+                    } else {
+                        Log.e(TAG, "Failed to load/parse JSON " + result.getMessage());
                     }
                 }
+            };
+            try {
+                loadTask.execute(new URL[]{new URL(JSON_URL)});
+            } catch (MalformedURLException e) {
+                Log.wtf(TAG, "Hardcoded URL is malformed " + JSON_URL);
             }
-            return "UTF-8";
+        }
+
+        @Override
+        public void onDestroy() {
+            if (loadTask != null) {
+                loadTask.cancel(true);
+            }
+            super.onDestroy();
         }
 
         private class MyAdapter extends BaseAdapter {
