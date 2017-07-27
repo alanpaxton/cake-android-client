@@ -13,6 +13,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.InvalidParameterException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Created by Riad on 20/05/2015.
@@ -26,31 +29,46 @@ public class ImageLoader {
     /**
      * Simple function for loading a bitmap image from the web
      *
-     * @param url       image url
+     * @param urlS       image url string
      * @param imageView view to set image too.
      */
-    public void load(final String url, final ImageView imageView) {
-        if (TextUtils.isEmpty(url)) {
+    public void load(final String urlS, final ImageView imageView) {
+        if (TextUtils.isEmpty(urlS)) {
             throw new InvalidParameterException("URL is empty!");
+        }
+        final URL url;
+        try {
+            url = new URL(urlS);
+        } catch (MalformedURLException mue) {
+            Log.e(TAG, "Bad (malformed) image URL, cannot load", mue);
+            return;
         }
 
         // Can you think of a way to improve loading of bitmaps
         // that have already been loaded previously??
 
-        LoadImageDataTask loadImageDataTask = new LoadImageDataTask() {
+        //The cache we use here is just a map, which we extend indefinitely.
+        //This works because we have a small, finite number of different images.
+        //We would be better off using Picasso or Glide libraries.
+        //If we must roll our own cache, we need to add an entry limit and LRU:
+        //LinkedHashMap can help there if we're careful.
+        if (imageCache.containsKey(url)) {
+            setImageView(imageView, imageCache.get(url));
+        } else {
 
-            @Override public void onPostExecute(byte[] result) {
-                if (!isCancelled()) {
-                    setImageView(imageView, convertToBitmap(result));
-                } else {
-                    Log.e(TAG, "Failed to load image " + url);
+            LoadImageDataTask loadImageDataTask = new LoadImageDataTask() {
+
+                @Override public void onPostExecute(byte[] result) {
+                    if (!isCancelled()) {
+                        Bitmap bitmap = convertToBitmap(result);
+                        imageCache.put(url, bitmap);
+                        setImageView(imageView, convertToBitmap(result));
+                    } else {
+                        Log.e(TAG, "Failed to load image " + url);
+                    }
                 }
-            }
-        };
-        try {
-            loadImageDataTask.execute(new URL[]{new URL(url)});
-        } catch (MalformedURLException mue) {
-            Log.e(TAG, "Bad (malformed) image URL, cannot load", mue);
+            };
+            loadImageDataTask.execute(new URL[]{url});
         }
     }
 
@@ -100,4 +118,6 @@ public class ImageLoader {
     private static void setImageView(ImageView imageView, Bitmap bitmap) {
         imageView.setImageBitmap(bitmap);
     }
+
+    private static Map<URL, Bitmap> imageCache = new HashMap<>();
 }
