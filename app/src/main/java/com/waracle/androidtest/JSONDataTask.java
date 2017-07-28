@@ -45,37 +45,17 @@ class JSONDataTask extends AsyncTask<URL, Void, JSONDataTask.Result> {
         }
     }
 
-    /**
-     * Returns the charset specified in the Content-Type of this header,
-     * or the HTTP default (ISO-8859-1) if none can be found.
-     */
-    public static String parseCharset(String contentType) {
-        if (contentType != null) {
-            String[] params = contentType.split(",");
-            for (int i = 1; i < params.length; i++) {
-                String[] pair = params[i].trim().split("=");
-                if (pair.length == 2) {
-                    if (pair[0].equals("charset")) {
-                        return pair[1];
-                    }
-                }
-            }
-        }
-        return "UTF-8";
-    }
-
     @Override
     protected Result doInBackground(URL... urls) {
 
         URL url = urls[0];
-        HttpURLConnection urlConnection = null;
-        InputStream in;
+        URLData urlData = new URLData(url);
         try {
-            urlConnection = (HttpURLConnection) url.openConnection();
-            in = new BufferedInputStream(urlConnection.getInputStream());
+            urlData.connect();
 
             // Can you think of a way to improve the performance of loading data
             // using HTTP headers???
+            //{@link URLData} has the answers
 
             // Also, Do you trust any utils thrown your way????
 
@@ -88,13 +68,11 @@ class JSONDataTask extends AsyncTask<URL, Void, JSONDataTask.Result> {
 
             //Now I'll go off and read that code...
 
-            byte[] bytes = StreamUtils.readUnknownFully(in);
+            byte[] bytes = urlData.readData();
 
             // Read in charset of HTTP content.
-            String charset = parseCharset(urlConnection.getRequestProperty("Content-Type"));
-
             // Convert byte array to appropriate encoded string.
-            String jsonText = new String(bytes, charset);
+            String jsonText = new String(bytes, urlData.getCharset());
 
             // Read string as JSON.
             return new Result(new JSONArray(jsonText));
@@ -103,9 +81,7 @@ class JSONDataTask extends AsyncTask<URL, Void, JSONDataTask.Result> {
         } catch (JSONException je) {
             return new Result(je);
         } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
+            urlData.disconnect();
         }
     }
 }

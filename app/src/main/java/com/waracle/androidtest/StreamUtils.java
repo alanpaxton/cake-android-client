@@ -18,7 +18,7 @@ public class StreamUtils {
     //Possible to get a read() IOException after close, and then not return the stream to that point ?
     //Potentially ++ memory use when there's a big stream to read (Byte objects and byte[])
     //Will fix by using the Content-Length header to read a pre-allocated byte[]
-    
+
     public static byte[] readUnknownFully(InputStream stream) throws IOException {
         // Read in stream of bytes
         ArrayList<Byte> data = new ArrayList<>();

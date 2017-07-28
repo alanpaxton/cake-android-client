@@ -86,27 +86,12 @@ public class ImageLoader {
         }
 
         private static byte[] loadImageData(URL url) throws IOException {
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            InputStream inputStream = null;
+            URLData urlData = new URLData(url);
             try {
-                try {
-                    // Read data from workstation
-                    inputStream = connection.getInputStream();
-                } catch (IOException e) {
-                    // Read the error from the workstation
-                    inputStream = connection.getErrorStream();
-                }
-
-                // Can you think of a way to make the entire
-                // HTTP more efficient using HTTP headers??
-
-                return StreamUtils.readUnknownFully(inputStream);
+                urlData.connect();
+                return urlData.readData();
             } finally {
-                // Close the input stream if it exists.
-                StreamUtils.close(inputStream);
-
-                // Disconnect the connection
-                connection.disconnect();
+                urlData.disconnect();
             }
         }
     }
