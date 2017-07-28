@@ -13,8 +13,10 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,17 +54,30 @@ public class ImageLoader {
         //We would be better off using Picasso or Glide libraries.
         //If we must roll our own cache, we need to add an entry limit and LRU:
         //LinkedHashMap can help there if we're careful.
-        if (imageCache.containsKey(url)) {
-            setImageView(imageView, imageCache.get(url));
-        } else {
 
+        //For this cache, we are doing multiple fetches of the same image on the first load,
+        //because we have (e.g.) 3 rows using the same image, and this gets requested
+        if (imageCache.containsKey(url)) {
+            //Use the cached image
+            setImageView(imageView, imageCache.get(url));
+        } else if (requests.containsKey(url)) {
+            //Add to the list of requests for the pending image
+            requests.get(url).add(imageView);
+        } else {
+            //build the list of views waiting for the image at this url
+            ArrayList<ImageView> views = new ArrayList<>();
+            views.add(imageView);
+            requests.put(url, views);
             LoadImageDataTask loadImageDataTask = new LoadImageDataTask() {
 
                 @Override public void onPostExecute(byte[] result) {
                     if (!isCancelled()) {
                         Bitmap bitmap = convertToBitmap(result);
                         imageCache.put(url, bitmap);
-                        setImageView(imageView, convertToBitmap(result));
+                        for (ImageView view : requests.get(url)) {
+                            setImageView(view, bitmap);
+                        }
+                        requests.remove(url);
                     } else {
                         Log.e(TAG, "Failed to load image " + url);
                     }
@@ -105,4 +120,5 @@ public class ImageLoader {
     }
 
     private static Map<URL, Bitmap> imageCache = new HashMap<>();
+    private static Map<URL, List<ImageView>> requests = new HashMap<>();
 }
