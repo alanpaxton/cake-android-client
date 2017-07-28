@@ -16,6 +16,11 @@ import java.util.Map;
  * Created by alan on 28/07/2017.
  */
 
+/**
+ * Encapsulate fetching of data from a URL.
+ * Read headers when we connect, so that we can get content length,
+ * in order to guide efficient buffer allocation on fetch of data.
+ */
 public class URLData {
 
     private static final String TAG = URLData.class.getSimpleName();
@@ -77,7 +82,7 @@ public class URLData {
      * Returns the charset specified in the Content-Type of this header,
      * or the HTTP default (ISO-8859-1) if none can be found.
      */
-    static String parseCharset(String contentType) {
+    private static String parseCharset(String contentType) {
         if (contentType != null) {
             String[] params = contentType.split(",");
             for (int i = 1; i < params.length; i++) {
@@ -92,7 +97,7 @@ public class URLData {
         return "UTF-8";
     }
 
-    static byte[] readKnown(InputStream stream, int size) throws IOException {
+    private static byte[] readKnown(InputStream stream, int size) throws IOException {
 
         byte[] bytes = new byte[size];
         int count = 0;
@@ -136,7 +141,7 @@ public class URLData {
      *
      * @param closeable
      */
-    static void close(Closeable closeable) {
+    private static void close(Closeable closeable) {
         if (closeable != null) {
             try {
                 closeable.close();

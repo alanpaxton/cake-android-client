@@ -25,7 +25,7 @@ import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static String JSON_URL = "https://gist.githubusercontent.com/hart88/198f29ec5114a3ec3460/" +
+    private final static String JSON_URL = "https://gist.githubusercontent.com/hart88/198f29ec5114a3ec3460/" +
             "raw/8dd19a88f9b8d24c23d9960f3300d0c917a4f07c/cake.json";
 
     @Override
@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             };
             try {
-                loadTask.execute(new URL[]{new URL(JSON_URL)});
+                loadTask.execute(new URL(JSON_URL));
             } catch (MalformedURLException e) {
                 Log.wtf(TAG, "Hardcoded URL is malformed " + JSON_URL);
             }
@@ -126,11 +126,11 @@ public class MainActivity extends AppCompatActivity {
             private JSONArray mItems;
             private ImageLoader mImageLoader;
 
-            public MyAdapter() {
+            MyAdapter() {
                 this(new JSONArray());
             }
 
-            public MyAdapter(JSONArray items) {
+            MyAdapter(JSONArray items) {
                 mItems = items;
                 mImageLoader = new ImageLoader();
             }
@@ -177,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
                 return root;
             }
 
-            public void setItems(JSONArray items) {
+            void setItems(JSONArray items) {
                 mItems = items;
             }
         }

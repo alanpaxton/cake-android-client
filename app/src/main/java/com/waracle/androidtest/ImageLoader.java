@@ -24,7 +24,7 @@ public class ImageLoader {
 
     private static final String TAG = ImageLoader.class.getSimpleName();
 
-    public ImageLoader() { /**/ }
+    ImageLoader() { /**/ }
 
     /**
      * Simple function for loading a bitmap image from the web
@@ -32,7 +32,7 @@ public class ImageLoader {
      * @param urlS       image url string
      * @param imageView view to set image too.
      */
-    public void load(final String urlS, final ImageView imageView) {
+    void load(final String urlS, final ImageView imageView) {
         if (TextUtils.isEmpty(urlS)) {
             throw new InvalidParameterException("URL is empty!");
         }
@@ -68,7 +68,7 @@ public class ImageLoader {
                     }
                 }
             };
-            loadImageDataTask.execute(new URL[]{url});
+            loadImageDataTask.execute(url);
         }
     }
 
